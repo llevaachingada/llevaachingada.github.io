@@ -1,0 +1,1287 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>rbassist — Local AI tools for serious DJ libraries</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0b0d;
+    --bg-2:#0e1013;
+    --panel:#14171c;
+    --panel-2:#181c22;
+    --line:#23272f;
+    --line-2:#2c313a;
+    --text:#ece9e2;
+    --muted:#9aa1ad;
+    --muted-2:#6b7280;
+    --accent:oklch(0.86 0.18 132);
+    --accent-dim:oklch(0.50 0.12 132);
+    --amber:oklch(0.80 0.14 70);
+    --magenta:oklch(0.68 0.18 350);
+    --teal:oklch(0.72 0.10 200);
+    --font-sans:"Geist",ui-sans-serif,system-ui,-apple-system,sans-serif;
+    --font-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:var(--font-sans);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+  ::selection{background:var(--accent);color:#0a0b0d}
+  a{color:inherit;text-decoration:none}
+  button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+  h1,h2,h3,h4{font-weight:500;letter-spacing:-0.02em;margin:0;color:var(--text);text-wrap:balance}
+  h1{font-size:clamp(40px,5.6vw,76px);line-height:1.02;letter-spacing:-0.035em}
+  h2{font-size:clamp(28px,3.4vw,44px);line-height:1.05;letter-spacing:-0.025em}
+  h3{font-size:18px;line-height:1.3}
+  p{margin:0;color:var(--muted);text-wrap:pretty}
+  .wrap{max-width:1240px;margin:0 auto;padding:0 32px}
+  .mono{font-family:var(--font-mono);font-size:12px;letter-spacing:.02em;color:var(--muted)}
+  .eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:inline-flex;align-items:center;gap:10px}
+  .eyebrow::before{content:"";width:6px;height:6px;background:var(--accent);border-radius:50%;box-shadow:0 0 12px var(--accent-dim)}
+
+  /* NAV */
+  .nav{position:sticky;top:0;z-index:50;backdrop-filter:saturate(160%) blur(14px);background:rgba(10,11,13,0.72);border-bottom:1px solid var(--line)}
+  .nav-inner{display:flex;align-items:center;justify-content:space-between;height:62px}
+  .brand{display:flex;align-items:center;gap:12px;font-weight:600;letter-spacing:-0.01em}
+  .brand-mark{width:22px;height:22px;border-radius:5px;background:linear-gradient(180deg,#1c1f25,#0e1014);border:1px solid var(--line-2);position:relative;overflow:hidden}
+  .brand-mark::before{content:"";position:absolute;left:3px;right:3px;top:50%;height:9px;transform:translateY(-50%);background:repeating-linear-gradient(90deg,var(--accent) 0 1.5px,transparent 1.5px 3px);opacity:.85}
+  .brand-mark::after{content:"";position:absolute;left:3px;right:3px;top:50%;height:1px;background:var(--text);opacity:.4}
+  .nav-links{display:flex;gap:28px}
+  .nav-links a{color:var(--muted);font-size:13.5px;transition:color .15s}
+  .nav-links a:hover{color:var(--text)}
+  .nav-cta{display:flex;align-items:center;gap:8px}
+  @media (max-width:820px){.nav-links{display:none}}
+
+  /* BUTTONS */
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:6px;font-size:14px;font-weight:500;border:1px solid var(--line-2);background:var(--panel);color:var(--text);transition:border-color .15s,background .15s}
+  .btn:hover{border-color:#3a4150;background:var(--panel-2)}
+  .btn-primary{background:var(--accent);color:#0a0b0d;border-color:var(--accent);box-shadow:0 6px 24px -8px var(--accent-dim);font-weight:600}
+  .btn-primary:hover{background:#c7f06b;border-color:#c7f06b}
+  .btn-ghost{background:transparent}
+  .arrow{display:inline-block;transition:transform .15s}
+  .btn:hover .arrow{transform:translateX(2px)}
+
+  /* HERO */
+  .hero{padding:80px 0 56px;position:relative;overflow:hidden}
+  .bg-fx{position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+  .bg-fx::before{content:"";position:absolute;left:50%;top:-200px;transform:translateX(-50%);width:1200px;height:600px;background:radial-gradient(closest-side,oklch(0.55 0.18 132 / .14),transparent 70%);filter:blur(20px)}
+  .bg-fx::after{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.02) 1px,transparent 1px);background-size:48px 48px;mask-image:radial-gradient(ellipse at top,#000 30%,transparent 75%)}
+  .hero .wrap{position:relative;z-index:1}
+  .hero-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .pill{display:inline-flex;align-items:center;gap:8px;padding:5px 10px 5px 8px;border-radius:999px;background:var(--panel);border:1px solid var(--line-2);font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;color:var(--muted)}
+  .pill .dot{width:6px;height:6px;border-radius:50%;background:var(--amber);box-shadow:0 0 8px var(--amber)}
+  .hero h1{margin-top:24px;max-width:14ch}
+  .hero h1 em{font-style:normal;color:var(--accent)}
+  .hero-sub{margin-top:22px;font-size:18.5px;color:#c8ccd3;max-width:62ch;line-height:1.55}
+  .hero-ctas{margin-top:30px;display:flex;gap:12px;flex-wrap:wrap}
+  .hero-meta{margin-top:36px;display:flex;flex-wrap:wrap;gap:10px 28px;font-family:var(--font-mono);font-size:11.5px;color:var(--muted);padding-top:24px;border-top:1px dashed var(--line)}
+  .hero-meta span{display:inline-flex;align-items:center;gap:8px}
+  .hero-meta span::before{content:"";width:5px;height:5px;background:var(--muted-2);border-radius:1px}
+
+  /* "WHAT REKORDBOX CAN'T DO" — promoted to hero-adjacent */
+  .rb-cant{margin-top:64px;border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,#0f1216,#0b0d11);overflow:hidden}
+  .rb-cant-head{padding:22px 28px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap}
+  .rb-cant-head .title{display:flex;flex-direction:column;gap:6px}
+  .rb-cant-head .title b{font-size:17px;color:var(--text);font-weight:500}
+  .rb-cant-head .title span{font-size:13px;color:var(--muted)}
+  .rb-cant-head .tag{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--amber);padding:5px 10px;border:1px solid color-mix(in oklch,var(--amber) 40%,#20242c);border-radius:4px;background:#0a0b0d}
+  .rb-cant-grid{display:grid;grid-template-columns:repeat(4,1fr)}
+  @media (max-width:1040px){.rb-cant-grid{grid-template-columns:repeat(2,1fr)}}
+  @media (max-width:520px){.rb-cant-grid{grid-template-columns:1fr}}
+  .rb-cant-cell{padding:24px 26px;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:12px;min-height:200px}
+  .rb-cant-cell:last-child{border-right:0}
+  @media (max-width:1040px){.rb-cant-cell:nth-child(2n){border-right:0}}
+  @media (max-width:520px){.rb-cant-cell{border-right:0;border-bottom:1px solid var(--line)}}
+  .rb-cant-cell .num{font-family:var(--font-mono);font-size:11px;color:var(--muted-2);letter-spacing:.1em}
+  .rb-cant-cell .q{font-size:15.5px;color:var(--text);line-height:1.4;font-weight:400}
+  .rb-cant-cell .a{margin-top:auto;font-family:var(--font-mono);font-size:11.5px;color:var(--accent);line-height:1.55;padding-top:14px;border-top:1px dashed var(--line)}
+  .rb-cant-cell .a::before{content:"→ ";color:var(--muted-2)}
+
+  /* SECTION CHROME */
+  section.block{padding:120px 0;position:relative}
+  section.block .head{max-width:760px;margin-bottom:48px}
+  section.block .head h2{margin-top:14px}
+  section.block .head .sub{margin-top:18px;font-size:17.5px;line-height:1.55;color:#c8ccd3}
+
+  /* PRODUCT SCREEN (Vibe Search) */
+  .screen{background:linear-gradient(180deg,#101317 0%,#0c0e12 100%);border:1px solid var(--line-2);border-radius:10px;box-shadow:0 1px 0 rgba(255,255,255,0.04) inset,0 40px 100px -40px rgba(0,0,0,0.9);overflow:hidden;position:relative}
+  .screen-bar{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#15181d,#11141a);font-family:var(--font-mono);font-size:11px;color:var(--muted)}
+  .screen-dots{display:flex;gap:6px}
+  .screen-dots i{width:10px;height:10px;border-radius:50%;background:#2a2f37}
+  .screen-title{flex:1;text-align:center}
+  .screen-title b{color:var(--text);font-weight:500}
+  .screen-tabs{display:flex;gap:14px;font-size:11px}
+  .screen-tabs span{color:var(--muted-2)}
+  .screen-tabs .on{color:var(--accent)}
+
+  .search-row{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line);background:#0c0e12;flex-wrap:wrap}
+  .search-input{flex:1;min-width:220px;display:flex;align-items:center;gap:10px;padding:10px 12px;background:#0a0b0e;border:1px solid var(--line-2);border-radius:6px;font-family:var(--font-mono);font-size:13px;color:var(--text)}
+  .search-input .prompt{color:var(--accent)}
+  .search-input .caret{width:7px;height:14px;background:var(--accent);display:inline-block;animation:blink 1.05s steps(2) infinite}
+  @keyframes blink{50%{opacity:0}}
+  .chip{font-family:var(--font-mono);font-size:11px;color:var(--muted);padding:4px 8px;border:1px solid var(--line-2);border-radius:4px;background:#0e1014;white-space:nowrap}
+  .chip.accent{color:var(--accent);border-color:color-mix(in oklch,var(--accent) 40%,var(--line-2))}
+
+  .results-head,.row{display:grid;grid-template-columns:28px 1fr 60px 56px 60px 100px 96px;gap:12px;padding:11px 18px;align-items:center}
+  .results-head{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.12em;color:var(--muted-2);text-transform:uppercase;border-bottom:1px solid var(--line)}
+  .row{border-bottom:1px solid #181b21;font-size:13px;color:#c8ccd3}
+  .row:last-child{border-bottom:0}
+  .row .rank{font-family:var(--font-mono);font-size:11px;color:var(--muted-2)}
+  .row .title{display:flex;flex-direction:column;gap:2px;min-width:0}
+  .row .title b{color:var(--text);font-weight:500;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .row .title span{color:var(--muted);font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .row .num{font-family:var(--font-mono);font-size:12px;color:var(--text)}
+  .row .key{font-family:var(--font-mono);font-size:12px;color:var(--teal)}
+  .row .energy{display:flex;gap:2px}
+  .row .energy i{width:4px;height:10px;background:#23272f;border-radius:1px}
+  .row .energy i.on{background:var(--accent)}
+  .lane{display:inline-flex;gap:4px;flex-wrap:wrap}
+  .lane-tag{font-family:var(--font-mono);font-size:10px;padding:2px 6px;border-radius:3px;background:#1a1e25;color:#9aa1ad;border:1px solid #20242c}
+  .lane-tag.warm{color:var(--accent);border-color:color-mix(in oklch,var(--accent) 35%,#20242c)}
+  .lane-tag.tool{color:var(--teal);border-color:color-mix(in oklch,var(--teal) 35%,#20242c)}
+  .lane-tag.peak{color:var(--magenta);border-color:color-mix(in oklch,var(--magenta) 35%,#20242c)}
+  .row .score{display:flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:11.5px;color:var(--text)}
+  .score-bar{width:46px;height:4px;background:#1c2027;border-radius:2px;overflow:hidden;position:relative}
+  .score-bar i{position:absolute;left:0;top:0;height:100%;background:var(--accent)}
+  .row.featured{background:linear-gradient(90deg,color-mix(in oklch,var(--accent) 8%,transparent),transparent 60%)}
+  .row.featured .rank{color:var(--accent)}
+
+  .why{padding:14px 18px;background:#0c0e12;border-bottom:1px solid var(--line);display:flex;gap:14px;align-items:flex-start}
+  .why .tag{font-family:var(--font-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);border:1px solid color-mix(in oklch,var(--accent) 40%,#20242c);padding:3px 7px;border-radius:3px;background:#0a0b0d;flex-shrink:0;margin-top:1px}
+  .why p{font-size:12.5px;color:#b6bcc6;line-height:1.55}
+  .why p code{font-family:var(--font-mono);color:var(--text);background:#1a1e25;padding:1px 5px;border-radius:3px;font-size:11.5px}
+
+  /* TWO-COL FEATURE BLOCKS (Expander, Cues, Tagging, Repair) */
+  .feature{display:grid;grid-template-columns:1fr 1.15fr;gap:64px;align-items:center}
+  .feature.flip{grid-template-columns:1.15fr 1fr}
+  .feature.flip .feature-text{order:2}
+  @media (max-width:980px){.feature,.feature.flip{grid-template-columns:1fr;gap:40px}.feature.flip .feature-text{order:0}}
+  .feature-text .eyebrow{margin-bottom:16px}
+  .feature-text h2{font-size:clamp(26px,3vw,38px)}
+  .feature-text p.lead{margin-top:18px;font-size:17px;line-height:1.55;color:#c8ccd3}
+  .feature-bullets{margin-top:24px;display:flex;flex-direction:column;gap:0;border-top:1px solid var(--line)}
+  .feature-bullets li{list-style:none;padding:14px 0;border-bottom:1px solid var(--line);display:flex;gap:14px;align-items:flex-start;font-size:14px;color:#c8ccd3}
+  .feature-bullets li .num{font-family:var(--font-mono);font-size:11px;color:var(--muted-2);min-width:28px;padding-top:2px}
+  .feature-bullets li b{color:var(--text);font-weight:500}
+  .feature-bullets li span.det{display:block;margin-top:3px;color:var(--muted);font-size:13px;line-height:1.5}
+
+  /* CRATE EXPANDER PANEL */
+  .panel-card{background:linear-gradient(180deg,#101317,#0b0d11);border:1px solid var(--line-2);border-radius:10px;box-shadow:0 30px 80px -40px rgba(0,0,0,0.8);overflow:hidden}
+  .panel-card .pc-head{padding:14px 18px;border-bottom:1px solid var(--line);background:#0d0f13;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .panel-card .pc-head .name{display:flex;align-items:center;gap:10px;font-family:var(--font-mono);font-size:12px;color:var(--text)}
+  .panel-card .pc-head .name::before{content:"●";color:var(--accent);font-size:10px}
+  .panel-card .pc-head .meta{font-family:var(--font-mono);font-size:11px;color:var(--muted-2)}
+  .panel-card .pc-body{padding:22px 22px 26px}
+
+  .seedrow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;background:#0c0e12;border:1px solid var(--line-2);border-radius:6px;margin-bottom:18px;flex-wrap:wrap}
+  .seedrow .lbl{font-family:var(--font-mono);font-size:10.5px;color:var(--muted-2);letter-spacing:.14em;text-transform:uppercase}
+  .seedrow .val{font-size:14px;color:var(--text);display:flex;align-items:center;gap:10px}
+  .seedrow .val .ct{font-family:var(--font-mono);font-size:11.5px;color:var(--muted);background:#1a1e25;padding:2px 7px;border-radius:3px}
+
+  .modes{display:flex;gap:6px;padding:4px;background:#0c0e12;border:1px solid var(--line-2);border-radius:6px;width:fit-content;font-family:var(--font-mono);font-size:11.5px;margin-bottom:22px}
+  .modes button{padding:7px 14px;border-radius:4px;color:var(--muted);letter-spacing:.04em}
+  .modes button.on{background:#1a1e25;color:var(--text);box-shadow:inset 0 0 0 1px var(--line-2)}
+  .modes button.on.accent{color:var(--accent)}
+
+  .roles{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap}
+  .role{padding:8px 14px;border:1px solid var(--line-2);border-radius:999px;font-size:13px;color:var(--muted);background:#0c0e12;display:inline-flex;align-items:center;gap:8px}
+  .role .dt{width:6px;height:6px;border-radius:50%;background:var(--muted-2)}
+  .role.on{color:var(--text);border-color:var(--accent);background:color-mix(in oklch,var(--accent) 14%,#0c0e12)}
+  .role.on .dt{background:var(--accent);box-shadow:0 0 8px var(--accent-dim)}
+
+  .sliders{display:flex;flex-direction:column;gap:16px;margin-bottom:8px}
+  .slider{display:grid;grid-template-columns:140px 1fr 56px;gap:14px;align-items:center}
+  .slider .slbl{font-size:13px;color:#c8ccd3}
+  .slider .slbl small{display:block;font-family:var(--font-mono);font-size:10.5px;color:var(--muted-2);margin-top:2px;letter-spacing:.04em}
+  .strack{position:relative;height:6px;background:#1a1e25;border-radius:3px}
+  .strack i{position:absolute;left:0;top:0;height:100%;background:linear-gradient(90deg,color-mix(in oklch,var(--accent) 30%,#1a1e25),var(--accent));border-radius:3px}
+  .strack .thumb{position:absolute;top:50%;width:14px;height:14px;border-radius:50%;background:var(--text);border:3px solid var(--accent);transform:translate(-50%,-50%);box-shadow:0 0 0 4px rgba(0,0,0,.5),0 2px 8px rgba(0,0,0,.6)}
+  .sval{font-family:var(--font-mono);font-size:12px;color:var(--text);text-align:right}
+
+  .keypad{display:flex;gap:16px;margin-top:22px;padding-top:22px;border-top:1px dashed var(--line);flex-wrap:wrap;align-items:center;justify-content:space-between}
+  .keyopts{display:flex;gap:6px;font-family:var(--font-mono);font-size:11.5px;align-items:center}
+  .keyopts .label{color:var(--muted-2);letter-spacing:.1em;text-transform:uppercase;font-size:10.5px;margin-right:6px}
+  .keyopts .opt{padding:5px 9px;border:1px solid var(--line-2);border-radius:4px;background:#0c0e12;color:var(--muted)}
+  .keyopts .opt.on{color:var(--accent);border-color:color-mix(in oklch,var(--accent) 40%,#20242c);background:#0a0b0d}
+  .topk{display:flex;align-items:center;gap:10px;font-family:var(--font-mono);font-size:12px;color:var(--muted)}
+  .topk .v{color:var(--text);background:#0c0e12;border:1px solid var(--line-2);padding:4px 10px;border-radius:4px}
+
+  .expander-foot{margin-top:22px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding-top:18px;border-top:1px solid var(--line)}
+  .expander-foot .status{font-family:var(--font-mono);font-size:11.5px;color:var(--muted-2);display:flex;align-items:center;gap:10px}
+  .expander-foot .status b{color:var(--accent);font-weight:500}
+  .expander-foot .actions{display:flex;gap:8px}
+
+  /* AUTO-CUES VISUAL */
+  .cues-card{background:linear-gradient(180deg,#101317,#0b0d11);border:1px solid var(--line-2);border-radius:10px;overflow:hidden}
+  .cues-head{padding:16px 20px;border-bottom:1px solid var(--line);background:#0d0f13;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+  .cues-track{font-family:var(--font-mono);font-size:13px;color:var(--text);display:flex;align-items:center;gap:10px}
+  .cues-track .bpm{color:var(--muted);font-size:11.5px}
+  .cues-meta{font-family:var(--font-mono);font-size:11px;color:var(--muted-2)}
+  .cues-body{padding:24px 20px 18px;position:relative}
+  .wave-wrap{position:relative;height:96px}
+  .wave-bars{display:flex;gap:1px;align-items:center;height:96px;width:100%}
+  .wave-bars i{flex:1;background:#3b4150;border-radius:1px;min-width:1px}
+  .wave-bars i.lit{background:var(--accent)}
+  .wave-bars i.dim{background:#23272f}
+  /* cue markers */
+  .cue-markers{position:absolute;inset:0;pointer-events:none}
+  .cue{position:absolute;top:-6px;bottom:-22px;width:2px;background:var(--accent)}
+  .cue .lbl{position:absolute;top:-22px;left:50%;transform:translateX(-50%);font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;color:var(--accent);background:#0a0b0d;padding:2px 6px;border-radius:3px;border:1px solid color-mix(in oklch,var(--accent) 35%,#20242c);white-space:nowrap}
+  .cue.amber{background:var(--amber)}
+  .cue.amber .lbl{color:var(--amber);border-color:color-mix(in oklch,var(--amber) 40%,#20242c)}
+  .cue.teal{background:var(--teal)}
+  .cue.teal .lbl{color:var(--teal);border-color:color-mix(in oklch,var(--teal) 40%,#20242c)}
+  .cue.mag{background:var(--magenta)}
+  .cue.mag .lbl{color:var(--magenta);border-color:color-mix(in oklch,var(--magenta) 40%,#20242c)}
+  .timeline{margin-top:30px;display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:10.5px;color:var(--muted-2)}
+  .cues-template{padding:18px 20px;border-top:1px solid var(--line);background:#0c0e12;display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;font-family:var(--font-mono);font-size:11.5px;color:var(--muted)}
+  .cues-template .tlbl{color:var(--muted-2);letter-spacing:.12em;text-transform:uppercase;font-size:10.5px}
+  .cues-template .seq{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+  .cues-template .seq span{display:inline-flex;align-items:center;gap:6px}
+  .cues-template .seq span::before{content:"";width:6px;height:6px;border-radius:50%}
+  .cues-template .seq .intro::before{background:var(--accent)}
+  .cues-template .seq .core::before{background:var(--teal)}
+  .cues-template .seq .drop::before{background:var(--magenta)}
+  .cues-template .seq .out::before{background:var(--amber)}
+
+  /* AI TAGGING REVIEW QUEUE */
+  .tag-card{background:linear-gradient(180deg,#101317,#0b0d11);border:1px solid var(--line-2);border-radius:10px;overflow:hidden}
+  .tag-head{padding:16px 20px;border-bottom:1px solid var(--line);background:#0d0f13;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+  .tag-head .ns{display:flex;gap:6px;font-family:var(--font-mono);font-size:11.5px}
+  .tag-head .ns button{padding:5px 10px;border-radius:4px;border:1px solid var(--line-2);background:#0c0e12;color:var(--muted)}
+  .tag-head .ns button.on{color:var(--text);background:#1a1e25}
+  .tag-head .ns button.ai.on{color:var(--accent);border-color:color-mix(in oklch,var(--accent) 35%,#20242c)}
+  .conf{display:flex;align-items:center;gap:12px;font-family:var(--font-mono);font-size:11.5px;color:var(--muted-2);flex:1;max-width:340px}
+  .conf .ctrack{position:relative;height:4px;background:#1a1e25;border-radius:2px;flex:1}
+  .conf .ctrack i{position:absolute;left:0;top:0;height:100%;background:var(--accent);border-radius:2px}
+  .conf .ctrack .th{position:absolute;top:50%;width:10px;height:10px;border-radius:50%;background:var(--text);border:2px solid var(--accent);transform:translate(-50%,-50%)}
+  .conf .v{color:var(--accent);min-width:38px;text-align:right}
+  .tag-body{padding:0}
+  .tag-row{display:grid;grid-template-columns:1fr 1.4fr 100px;gap:18px;align-items:center;padding:16px 20px;border-bottom:1px solid var(--line)}
+  .tag-row:last-child{border-bottom:0}
+  .tag-row .trk{display:flex;flex-direction:column;gap:3px;min-width:0}
+  .tag-row .trk b{color:var(--text);font-size:14px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tag-row .trk span{font-family:var(--font-mono);font-size:11px;color:var(--muted-2)}
+  .tag-row .suggestions{display:flex;gap:6px;flex-wrap:wrap}
+  .stag{font-family:var(--font-mono);font-size:11px;padding:3px 8px;border-radius:3px;border:1px solid var(--line-2);background:#0c0e12;color:#c8ccd3;display:inline-flex;align-items:center;gap:6px}
+  .stag .cf{color:var(--muted-2);font-size:10px}
+  .stag.high{border-color:color-mix(in oklch,var(--accent) 40%,#20242c);background:color-mix(in oklch,var(--accent) 8%,#0c0e12)}
+  .stag.high .cf{color:var(--accent)}
+  .stag.med{border-color:color-mix(in oklch,var(--amber) 35%,#20242c)}
+  .stag.med .cf{color:var(--amber)}
+  .stag.low{opacity:.6}
+  .tag-actions{display:flex;gap:6px;justify-content:flex-end}
+  .tact{font-family:var(--font-mono);font-size:11px;padding:6px 10px;border-radius:4px;border:1px solid var(--line-2);background:#0c0e12;color:var(--muted)}
+  .tact.acc{color:var(--accent);border-color:color-mix(in oklch,var(--accent) 40%,#20242c)}
+  .tact.rej{color:var(--muted)}
+
+  /* LIBRARY HEALTH TABLE */
+  .health-card{background:linear-gradient(180deg,#101317,#0b0d11);border:1px solid var(--line-2);border-radius:10px;overflow:hidden}
+  .health-head{padding:14px 20px;border-bottom:1px solid var(--line);background:#0d0f13;display:flex;justify-content:space-between;align-items:center;font-family:var(--font-mono);font-size:11.5px;color:var(--muted)}
+  .health-head b{color:var(--text);font-weight:500;font-size:13px;font-family:var(--font-sans);letter-spacing:-0.005em}
+  .health-row{display:grid;grid-template-columns:24px 1fr 96px 130px;gap:14px;padding:13px 20px;border-bottom:1px solid #181b21;align-items:center;font-size:13.5px;color:#c8ccd3}
+  .health-row:last-child{border-bottom:0}
+  .health-row .icn{width:18px;height:18px;border-radius:3px;background:#1a1e25;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:10px;color:var(--muted-2)}
+  .health-row.warn .icn{color:var(--amber);background:color-mix(in oklch,var(--amber) 14%,#1a1e25)}
+  .health-row.ok .icn{color:var(--accent);background:color-mix(in oklch,var(--accent) 14%,#1a1e25)}
+  .health-row .ct{font-family:var(--font-mono);font-size:13px;color:var(--text);text-align:right}
+  .health-row.warn .ct{color:var(--amber)}
+  .health-row .act{font-family:var(--font-mono);font-size:11px;color:var(--muted);text-align:right}
+  .health-row .act.dry{color:var(--accent)}
+  .health-foot{padding:14px 20px;background:#0c0e12;font-family:var(--font-mono);font-size:11.5px;color:var(--muted-2);display:flex;justify-content:space-between;border-top:1px solid var(--line);flex-wrap:wrap;gap:8px}
+
+  /* MODEL LANES — DJ-friendly */
+  .lanes2{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+  @media (max-width:880px){.lanes2{grid-template-columns:1fr}}
+  .ml-card{background:linear-gradient(180deg,#0f1216,#0b0d11);border:1px solid var(--line);border-radius:10px;padding:24px;display:flex;flex-direction:column;gap:14px;min-height:240px;position:relative}
+  .ml-card.beta{border-color:color-mix(in oklch,var(--amber) 20%,var(--line))}
+  .ml-top{display:flex;align-items:center;justify-content:space-between}
+  .ml-name{font-family:var(--font-mono);font-size:18px;letter-spacing:-0.01em;color:var(--text);font-weight:500}
+  .ml-stage{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;padding:4px 8px;border-radius:3px;border:1px solid}
+  .ml-stage.prod{color:var(--accent);border-color:color-mix(in oklch,var(--accent) 40%,#20242c);background:color-mix(in oklch,var(--accent) 6%,#0c0e12)}
+  .ml-stage.beta{color:var(--amber);border-color:color-mix(in oklch,var(--amber) 40%,#20242c);background:color-mix(in oklch,var(--amber) 6%,#0c0e12)}
+  .ml-for{font-size:15.5px;color:var(--text);font-weight:500;line-height:1.3}
+  .ml-desc{font-size:13.5px;color:var(--muted);line-height:1.55}
+  .ml-traits{margin-top:auto;display:flex;flex-direction:column;gap:8px;padding-top:14px;border-top:1px dashed var(--line)}
+  .ml-trait{display:flex;justify-content:space-between;align-items:center;font-family:var(--font-mono);font-size:11.5px}
+  .ml-trait .k{color:var(--muted-2);letter-spacing:.06em;text-transform:uppercase;font-size:10.5px}
+  .ml-trait .v{color:var(--text)}
+  .ml-trait .v.good{color:var(--accent)}
+  .ml-trait .v.warn{color:var(--amber)}
+
+  /* SAFETY (kept lean) */
+  .safety-grid{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start}
+  @media (max-width:880px){.safety-grid{grid-template-columns:1fr}}
+  .safety-list{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:0;border-top:1px solid var(--line)}
+  .safety-list li{padding:18px 0;border-bottom:1px solid var(--line);display:flex;gap:16px;align-items:flex-start;font-size:14.5px;color:#c8ccd3}
+  .safety-list li .num{font-family:var(--font-mono);font-size:11px;color:var(--muted-2);min-width:28px;letter-spacing:.06em;padding-top:3px}
+  .safety-list li b{color:var(--text);font-weight:500;display:block;margin-bottom:3px}
+  .safety-list li span{color:var(--muted);font-size:13px;line-height:1.5}
+  .safety-cli{background:#0a0b0e;border:1px solid var(--line);border-radius:8px;overflow:hidden;font-family:var(--font-mono);font-size:12.5px}
+  .safety-cli .bar{background:#0e1014;border-bottom:1px solid var(--line);padding:10px 14px;color:var(--muted-2);font-size:11px;display:flex;justify-content:space-between}
+  .safety-cli .bar .dot{color:var(--accent)}
+  .safety-cli .body{padding:18px 16px;line-height:1.7}
+  .safety-cli .pr{color:var(--accent)}
+  .safety-cli .cm{color:var(--muted-2)}
+  .safety-cli .ok{color:var(--accent)}
+  .safety-cli .wn{color:var(--amber)}
+  .safety-cli .txt{color:#c8ccd3}
+  .safety-cli .arr{color:var(--muted-2)}
+
+  /* STATUS */
+  .status{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  @media (max-width:880px){.status{grid-template-columns:1fr}}
+  .scol{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:24px}
+  .scol .scol-h{font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted-2);font-weight:500;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between}
+  .scol.prod .scol-h{color:var(--accent)}
+  .scol.beta .scol-h{color:var(--amber)}
+  .scol .ct{color:var(--muted-2);font-weight:400}
+  .scol ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column}
+  .scol li{font-size:14px;color:#c8ccd3;display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+  .scol li:last-child{border-bottom:0}
+  .scol li::before{content:"";width:6px;height:6px;border-radius:1px;background:var(--muted-2);flex-shrink:0}
+  .scol.prod li::before{background:var(--accent)}
+  .scol.beta li::before{background:var(--amber)}
+
+  /* FINAL CTA */
+  .cta{border:1px solid var(--line);border-radius:14px;background:radial-gradient(ellipse at 85% 15%,color-mix(in oklch,var(--accent) 12%,transparent),transparent 50%),linear-gradient(180deg,#0f1216,#0b0d11);padding:60px 56px;display:grid;grid-template-columns:1.2fr 1fr;gap:48px;align-items:center}
+  @media (max-width:880px){.cta{grid-template-columns:1fr;padding:36px 28px}}
+  .cta h2{font-size:clamp(28px,3vw,40px);max-width:18ch}
+  .cta-ctas{margin-top:28px;display:flex;gap:12px;flex-wrap:wrap}
+  .cta-meta{font-family:var(--font-mono);font-size:11.5px;color:var(--muted-2);display:flex;flex-direction:column}
+  .cta-meta div{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px dashed var(--line)}
+  .cta-meta div:last-child{border-bottom:0}
+  .cta-meta b{color:var(--text);font-weight:500}
+
+  /* FOOTER */
+  footer{padding:56px 0 60px;border-top:1px solid var(--line);margin-top:120px}
+  .foot{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:48px}
+  @media (max-width:780px){.foot{grid-template-columns:1fr 1fr;gap:32px}}
+  .foot-brand{display:flex;flex-direction:column;gap:14px;max-width:32ch}
+  .foot-brand p{font-size:13px;color:var(--muted);line-height:1.55}
+  .foot-col h5{font-family:var(--font-mono);font-size:11px;letter-spacing:.12em;color:var(--muted-2);text-transform:uppercase;margin:0 0 14px;font-weight:500}
+  .foot-col a{display:block;color:var(--muted);font-size:13.5px;padding:5px 0}
+  .foot-col a:hover{color:var(--text)}
+  .legal{margin-top:48px;display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:11px;color:var(--muted-2);flex-wrap:wrap;gap:10px;border-top:1px solid var(--line);padding-top:24px}
+
+  /* ============== MOBILE TUNING ============== */
+  @media (max-width:720px){
+    .wrap{padding:0 18px}
+    .nav-inner{height:56px}
+    .brand .mono{display:none}
+
+    /* tighten vertical rhythm */
+    .hero{padding:48px 0 36px}
+    section.block{padding:72px 0}
+    footer{margin-top:72px;padding:40px 0 48px}
+
+    /* type that scales down further than clamp() floors */
+    h1{font-size:38px !important;line-height:1.04 !important;letter-spacing:-0.025em !important}
+    .hero h1{margin-top:18px}
+    h2{font-size:26px !important;line-height:1.1 !important}
+    .hero-sub{font-size:16px;margin-top:18px}
+    .hero-ctas{margin-top:24px;width:100%}
+    .hero-ctas .btn{flex:1;justify-content:center}
+    .hero-meta{margin-top:26px;gap:8px 16px;padding-top:18px;font-size:11px}
+    section.block .head{margin-bottom:32px}
+    section.block .head .sub{font-size:15px;margin-top:14px}
+    .feature-text p.lead{font-size:15px;margin-top:14px}
+
+    /* rb-cant — already collapses to 1col at 520px, but cells were tall */
+    .rb-cant{margin-top:36px}
+    .rb-cant-head{padding:16px 18px}
+    .rb-cant-head .title b{font-size:15px}
+    .rb-cant-cell{padding:18px 18px;min-height:0}
+    .rb-cant-cell .q{font-size:14.5px}
+
+    /* product screen — let chrome shrink */
+    .screen-bar{padding:8px 10px;gap:8px;font-size:10px}
+    .screen-tabs{display:none}
+    .screen-title{font-size:10.5px}
+    .search-row{padding:12px;gap:8px}
+    .search-input{font-size:12px;padding:8px 10px;min-width:0}
+    .search-input span:not(.prompt):not(.caret){overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .chip{font-size:10px;padding:3px 6px}
+
+    /* results table — collapse to title + score, hide narrow columns */
+    .results-head,.row{grid-template-columns:24px 1fr 64px;gap:10px;padding:10px 14px}
+    .results-head > div:nth-child(n+4),
+    .row > div:nth-child(n+4){display:none}
+    .row .title b{font-size:13px}
+    .row .title span{font-size:11px}
+    .why{padding:12px 14px}
+    .why p{font-size:12px}
+
+    /* features stack — already do at 980, just tighten gap */
+    .feature,.feature.flip{gap:32px}
+
+    /* crate expander — stack slider rows on mobile */
+    .panel-card .pc-body{padding:18px}
+    .seedrow{padding:12px 14px}
+    .seedrow .val{font-size:13px}
+    .modes{font-size:11px;margin-bottom:18px}
+    .modes button{padding:6px 10px}
+    .roles{margin-bottom:18px;gap:6px}
+    .role{padding:6px 11px;font-size:12px}
+    .slider{grid-template-columns:1fr 50px;grid-template-areas:"lbl val" "track track";gap:6px 12px;row-gap:8px}
+    .slider .slbl{grid-area:lbl}
+    .slider .sval{grid-area:val}
+    .slider .strack{grid-area:track}
+    .keypad{flex-direction:column;align-items:flex-start;gap:14px}
+    .keyopts{flex-wrap:wrap}
+    .expander-foot{flex-direction:column;align-items:flex-start;gap:14px}
+    .expander-foot .actions{width:100%}
+    .expander-foot .actions .btn{flex:1;justify-content:center}
+
+    /* auto-cues — shrink waveform, ensure markers don't overflow */
+    .cues-head{padding:14px 16px}
+    .cues-track{font-size:12px;flex-wrap:wrap;gap:6px}
+    .cues-track .bpm{font-size:11px}
+    .cues-meta{font-size:10px}
+    .cues-body{padding:30px 16px 16px}
+    .wave-wrap{height:72px}
+    .wave-bars{height:72px}
+    .cue .lbl{font-size:9px;padding:1px 4px}
+    /* hide every-other cue label on mobile to avoid overlap */
+    .cue:nth-child(even) .lbl{display:none}
+    .timeline{font-size:9.5px;margin-top:24px}
+    .cues-template{padding:14px 16px;gap:10px;flex-direction:column;align-items:flex-start}
+    .cues-template .seq{gap:12px}
+
+    /* ai tagging — stack each row */
+    .tag-head{padding:14px 16px;gap:12px}
+    .tag-head .ns{flex-wrap:wrap}
+    .conf{max-width:100%;width:100%}
+    .tag-row{grid-template-columns:1fr;gap:10px;padding:14px 16px}
+    .tag-row .trk b{font-size:13.5px}
+    .tag-actions{justify-content:flex-start}
+
+    /* library health — drop the action column into stacked text */
+    .health-row{grid-template-columns:22px 1fr auto;gap:10px;padding:11px 14px;font-size:12.5px}
+    .health-row .act{display:none}
+    .health-head{padding:12px 14px;font-size:11px;flex-wrap:wrap;gap:6px}
+    .health-foot{padding:12px 14px;font-size:10.5px}
+
+    /* model cards — stack to 1col already at 880, just tighten */
+    .ml-card{padding:20px;min-height:0;gap:10px}
+    .ml-name{font-size:16px}
+    .ml-for{font-size:14.5px}
+    .ml-desc{font-size:13px}
+
+    /* safety — kill 2col, stack list above CLI */
+    .safety-grid{gap:32px}
+    .safety-list li{padding:14px 0;gap:12px}
+    .safety-list li .num{min-width:24px;font-size:10.5px}
+    .safety-list li b{font-size:14px}
+    .safety-list li span{font-size:12.5px}
+    .safety-cli .body{padding:14px;font-size:11.5px}
+
+    /* status — already collapses at 880 */
+    .scol{padding:20px}
+    .scol li{font-size:13px;padding:11px 0}
+
+    /* cta */
+    .cta{padding:32px 22px;gap:28px}
+    .cta h2{font-size:24px !important}
+    .cta-ctas{flex-direction:column;align-items:stretch}
+    .cta-ctas .btn{justify-content:center}
+    .cta-meta{font-size:11px}
+
+    /* footer */
+    .foot{grid-template-columns:1fr;gap:28px}
+    .foot-col a{padding:6px 0}
+    .legal{margin-top:32px;flex-direction:column;align-items:flex-start;gap:6px}
+  }
+
+  /* very small phones */
+  @media (max-width:380px){
+    .wrap{padding:0 14px}
+    h1{font-size:32px !important}
+    h2{font-size:22px !important}
+    .hero-meta{font-size:10.5px;gap:6px 14px}
+    .results-head,.row{grid-template-columns:22px 1fr 56px;padding:9px 12px}
+    .role{font-size:11px;padding:5px 9px}
+  }
+</style>
+</head>
+<body>
+
+<template id="__bundler_thumbnail">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <rect width="200" height="200" fill="#0a0b0d"/>
+  <g transform="translate(60,80)">
+    <rect width="80" height="40" rx="6" fill="#14171c" stroke="#2c313a"/>
+    <g fill="#bdf26b">
+      <rect x="8" y="14" width="2" height="12" rx="1"/>
+      <rect x="13" y="10" width="2" height="20" rx="1"/>
+      <rect x="18" y="6"  width="2" height="28" rx="1"/>
+      <rect x="23" y="12" width="2" height="16" rx="1"/>
+      <rect x="28" y="8"  width="2" height="24" rx="1"/>
+      <rect x="33" y="4"  width="2" height="32" rx="1"/>
+      <rect x="38" y="10" width="2" height="20" rx="1"/>
+      <rect x="43" y="14" width="2" height="12" rx="1"/>
+      <rect x="48" y="8"  width="2" height="24" rx="1"/>
+      <rect x="53" y="12" width="2" height="16" rx="1"/>
+      <rect x="58" y="6"  width="2" height="28" rx="1"/>
+      <rect x="63" y="10" width="2" height="20" rx="1"/>
+      <rect x="68" y="14" width="2" height="12" rx="1"/>
+    </g>
+  </g>
+  <text x="100" y="140" text-anchor="middle" fill="#ece9e2"
+        font-family="ui-monospace, Menlo, monospace" font-size="14" font-weight="500"
+        letter-spacing="0.04em">rbassist</text>
+  <text x="100" y="158" text-anchor="middle" fill="#6b7280"
+        font-family="ui-monospace, Menlo, monospace" font-size="9"
+        letter-spacing="0.18em">LOCAL · AI · DJ</text>
+</svg>
+</template>
+<div class="bg-fx"></div>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="wrap nav-inner">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true"></div>
+      <span>rbassist</span>
+      <span class="mono" style="color:var(--muted-2);margin-left:4px">v0.9 · beta</span>
+    </div>
+    <div class="nav-links">
+      <a href="#crates">Crate Expander</a>
+      <a href="#cues">Auto-cues</a>
+      <a href="#tagging">AI tagging</a>
+      <a href="#repair">Library repair</a>
+      <a href="#models">Models</a>
+      <a href="#cta">Beta</a>
+    </div>
+    <div class="nav-cta">
+      <a class="btn btn-primary" href="#cta">Request beta <span class="arrow">→</span></a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="wrap">
+    <div class="hero-row">
+      <span class="eyebrow">Local-first · Windows desktop</span>
+      <span class="pill"><span class="dot"></span>Private beta · v0.9.3</span>
+    </div>
+
+    <h1>Local AI tools for <em>serious DJ libraries.</em></h1>
+
+    <p class="hero-sub">
+      Find mix neighbours, expand crates, auto-cue tracks, search by vibe, and clean up the mess —
+      all on your own machine, with your own files. rbassist sits next to Rekordbox; it doesn&rsquo;t replace it,
+      and it never uploads your library.
+    </p>
+
+    <div class="hero-ctas">
+      <a class="btn btn-primary" href="#crates">See the Crate Expander <span class="arrow">→</span></a>
+      <a class="btn" href="#cta">Request beta access</a>
+    </div>
+
+    <div class="hero-meta">
+      <span>Windows-first</span>
+      <span>Rekordbox XML in &amp; out</span>
+      <span>Camelot key &amp; BPM aware</span>
+      <span>Auto hot/memory cues</span>
+      <span>Dry-run-first</span>
+      <span>No upload, ever</span>
+    </div>
+
+    <!-- WHAT REKORDBOX CAN'T DO — promoted -->
+    <div class="rb-cant">
+      <div class="rb-cant-head">
+        <div class="title">
+          <b>Questions Rekordbox can&rsquo;t answer well</b>
+          <span>The gaps rbassist is built around.</span>
+        </div>
+        <span class="tag">DJ-side gaps</span>
+      </div>
+      <div class="rb-cant-grid">
+        <div class="rb-cant-cell">
+          <span class="num">01</span>
+          <div class="q">&ldquo;What else in my library has this dark, rolling, dubby feel?&rdquo;</div>
+          <div class="a">Seed-track search across your real files</div>
+        </div>
+        <div class="rb-cant-cell">
+          <span class="num">02</span>
+          <div class="q">&ldquo;Grow this 30-track playlist to 120 without nearest-neighbour mush.&rdquo;</div>
+          <div class="a">Crate Expander with diversity controls</div>
+        </div>
+        <div class="rb-cant-cell">
+          <span class="num">03</span>
+          <div class="q">&ldquo;Set proper hot &amp; memory cues on 3,000 tracks before the weekend.&rdquo;</div>
+          <div class="a">Beat-aligned auto-cues, batch mode</div>
+        </div>
+        <div class="rb-cant-cell">
+          <span class="num">04</span>
+          <div class="q">&ldquo;Find every stale path, broken ref, and duplicate before tomorrow&rsquo;s gig.&rdquo;</div>
+          <div class="a">Library health audit, dry-run first</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- VIBE SEARCH (product screen) -->
+<section class="block" id="vibe">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">Vibe search</span>
+      <h2>Type how a track <em style="font-style:normal;color:var(--accent)">feels</em>. Get tracks from your folder.</h2>
+      <p class="sub">
+        Say what you want — &ldquo;late-night dubby rollers, warm bass, sparse vocals&rdquo; — and rbassist searches your real
+        local library by sound. BPM-aware, key-aware, duplicate-aware. No streaming catalogue, no upload.
+      </p>
+    </div>
+
+    <div class="screen">
+      <div class="screen-bar">
+        <div class="screen-dots"><i></i><i></i><i></i></div>
+        <div class="screen-title"><b>rbassist</b> &nbsp;·&nbsp; <span style="color:var(--muted-2)">~/Music/library</span></div>
+        <div class="screen-tabs"><span>Library</span><span class="on">Discover</span><span>Crate Expander</span><span>Cues</span><span>Tags</span><span>Health</span></div>
+      </div>
+
+      <div class="search-row">
+        <div class="search-input">
+          <span class="prompt">›</span>
+          <span style="color:var(--muted)">vibe:</span>
+          <span>late-night dubby rollers, warm bass, sparse vocals, low peak-time energy</span>
+          <span class="caret"></span>
+        </div>
+        <span class="chip accent">Vibe search</span>
+        <span class="chip">+ Mix neighbours rerank</span>
+        <span class="chip">118–126 BPM</span>
+        <span class="chip">Camelot 8A ±1</span>
+      </div>
+
+      <div class="why">
+        <span class="tag">Why these</span>
+        <p>
+          Vibe search pulled <code>1,284</code> candidates from your folder, then mix-neighbours reranked against your
+          <code>warmup / dub</code> crate. Kept <code>118–126 BPM</code>, key-compatible (Camelot 8A ±1), and folded <code>23</code> duplicates.
+        </p>
+      </div>
+
+      <div class="results-head">
+        <div>#</div><div>Track</div><div>BPM</div><div>Key</div><div>Energy</div><div>Role lane</div><div>Match</div>
+      </div>
+
+      <div class="row featured">
+        <div class="rank">01</div>
+        <div class="title"><b>Echo Chamber — Underwater Mix</b><span>Halftone · 2019 · ~/library/halftone/echo-uw.flac</span></div>
+        <div class="num">122.0</div>
+        <div class="key">8A</div>
+        <div class="energy"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></div>
+        <div class="lane"><span class="lane-tag warm">warm-up</span></div>
+        <div class="score">0.94<span class="score-bar"><i style="width:94%"></i></span></div>
+      </div>
+      <div class="row">
+        <div class="rank">02</div>
+        <div class="title"><b>Low Tide Patrol</b><span>Bandcamp · purchased 2022 · ~/library/bandcamp/low-tide.aiff</span></div>
+        <div class="num">120.5</div>
+        <div class="key">8A</div>
+        <div class="energy"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></div>
+        <div class="lane"><span class="lane-tag warm">warm-up</span></div>
+        <div class="score">0.91<span class="score-bar"><i style="width:91%"></i></span></div>
+      </div>
+      <div class="row">
+        <div class="rank">03</div>
+        <div class="title"><b>Aubade — Dub Take</b><span>Promo · WAV · ~/library/_inbox/promo/aubade-dub.wav</span></div>
+        <div class="num">124.0</div>
+        <div class="key">9A</div>
+        <div class="energy"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></div>
+        <div class="lane"><span class="lane-tag tool">tool</span></div>
+        <div class="score">0.88<span class="score-bar"><i style="width:88%"></i></span></div>
+      </div>
+      <div class="row">
+        <div class="rank">04</div>
+        <div class="title"><b>Slow Lacquer</b><span>Halftone · 2021 · ~/library/halftone/slow-lacq.flac</span></div>
+        <div class="num">121.2</div>
+        <div class="key">8A</div>
+        <div class="energy"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></div>
+        <div class="lane"><span class="lane-tag warm">warm-up</span></div>
+        <div class="score">0.86<span class="score-bar"><i style="width:86%"></i></span></div>
+      </div>
+      <div class="row">
+        <div class="rank">05</div>
+        <div class="title"><b>Night Bus 4am</b><span>Bandcamp · 2023 · ~/library/bandcamp/night-bus.flac</span></div>
+        <div class="num">123.3</div>
+        <div class="key">9A</div>
+        <div class="energy"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></div>
+        <div class="lane"><span class="lane-tag tool">tool</span><span class="lane-tag warm">warm-up</span></div>
+        <div class="score">0.82<span class="score-bar"><i style="width:82%"></i></span></div>
+      </div>
+      <div class="row">
+        <div class="rank">06</div>
+        <div class="title"><b>Subterrane — Patient Mix</b><span>Promo · AIFF · ~/library/_inbox/promo/subterrane.aiff</span></div>
+        <div class="num">122.4</div>
+        <div class="key">7A</div>
+        <div class="energy"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></div>
+        <div class="lane"><span class="lane-tag tool">tool</span></div>
+        <div class="score">0.79<span class="score-bar"><i style="width:79%"></i></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CRATE EXPANDER -->
+<section class="block" id="crates" style="padding-top:0">
+  <div class="wrap">
+    <div class="feature">
+      <div class="feature-text">
+        <span class="eyebrow">Crate Expander</span>
+        <h2>Grow a playlist <em style="font-style:normal;color:var(--accent)">without flattening the vibe.</em></h2>
+        <p class="lead">
+          Drop in a Rekordbox playlist, pick a mode, dial in similarity vs. diversity. rbassist expands the crate
+          using the seed tracks you trust — keeping BPM and key in pocket, suppressing same-artist clusters, exporting back to Rekordbox XML.
+        </p>
+        <ul class="feature-bullets">
+          <li><span class="num">01</span><div><b>Three modes, real differences</b><span class="det">Tight pulls in close neighbours. Balanced is the default. Adventurous loosens BPM/key and bumps diversity — for digging, not for the main set.</span></div></li>
+          <li><span class="num">02</span><div><b>Role lanes that map to a set</b><span class="det">Tell it whether you&rsquo;re building warm-up, peak-time, tools, or closers — and it ranks by what fits that slot, not just &ldquo;similar.&rdquo;</span></div></li>
+          <li><span class="num">03</span><div><b>Camelot or soft key matching</b><span class="det">Strict adjacency for harmonic sets, or soft mode when you&rsquo;d rather not lose a great track over a semitone.</span></div></li>
+          <li><span class="num">04</span><div><b>Anti-repetition that actually works</b><span class="det">Suppresses same-artist runs, same-title-stem dupes, and version clusters so the crate doesn&rsquo;t devolve into one producer&rsquo;s discography.</span></div></li>
+          <li><span class="num">05</span><div><b>Export to Rekordbox XML</b><span class="det">No destructive writes. You import the new playlist into Rekordbox yourself, when you&rsquo;re happy with it.</span></div></li>
+        </ul>
+      </div>
+
+      <div class="panel-card">
+        <div class="pc-head">
+          <div class="name">Crate Expander</div>
+          <div class="meta">seed · warmup / dub · 30 tracks → target 120</div>
+        </div>
+        <div class="pc-body">
+
+          <div class="seedrow">
+            <div>
+              <div class="lbl">Seed playlist</div>
+              <div class="val">warmup / dub<span class="ct">30 mapped</span><span class="ct" style="color:var(--accent)">ready</span></div>
+            </div>
+            <div class="topk">target<span class="v">120</span></div>
+          </div>
+
+          <div class="modes" role="tablist">
+            <button>tight</button>
+            <button class="on accent">balanced</button>
+            <button>adventurous</button>
+          </div>
+
+          <div class="roles">
+            <span class="role on"><span class="dt"></span>warm-up</span>
+            <span class="role"><span class="dt"></span>opener</span>
+            <span class="role on"><span class="dt"></span>tool</span>
+            <span class="role"><span class="dt"></span>peak-time</span>
+            <span class="role"><span class="dt"></span>closer</span>
+          </div>
+
+          <div class="sliders">
+            <div class="slider">
+              <div class="slbl">Similarity<small>how close to the seed</small></div>
+              <div class="strack"><i style="width:68%"></i><span class="thumb" style="left:68%"></span></div>
+              <div class="sval">0.68</div>
+            </div>
+            <div class="slider">
+              <div class="slbl">Diversity<small>break out of one sound</small></div>
+              <div class="strack"><i style="width:42%"></i><span class="thumb" style="left:42%"></span></div>
+              <div class="sval">0.42</div>
+            </div>
+            <div class="slider">
+              <div class="slbl">BPM match<small>tighter = stricter window</small></div>
+              <div class="strack"><i style="width:75%"></i><span class="thumb" style="left:75%"></span></div>
+              <div class="sval">0.75</div>
+            </div>
+            <div class="slider">
+              <div class="slbl">Seed coverage<small>reward the whole crate, not one track</small></div>
+              <div class="strack"><i style="width:55%"></i><span class="thumb" style="left:55%"></span></div>
+              <div class="sval">0.55</div>
+            </div>
+            <div class="slider">
+              <div class="slbl">Tag affinity<small>your own tags carry weight</small></div>
+              <div class="strack"><i style="width:48%"></i><span class="thumb" style="left:48%"></span></div>
+              <div class="sval">0.48</div>
+            </div>
+          </div>
+
+          <div class="keypad">
+            <div class="keyopts">
+              <span class="label">Key</span>
+              <span class="opt">strict</span>
+              <span class="opt on">camelot ±1</span>
+              <span class="opt">soft</span>
+              <span class="opt">off</span>
+            </div>
+            <div class="keyopts">
+              <span class="label">Anti-repeat</span>
+              <span class="opt on">artist</span>
+              <span class="opt on">title stem</span>
+              <span class="opt">version</span>
+            </div>
+          </div>
+
+          <div class="expander-foot">
+            <div class="status">previewed <b>120 tracks</b> · <span>23 dupes folded</span> · <span>4 outside key dropped</span></div>
+            <div class="actions">
+              <button class="btn">Preview</button>
+              <button class="btn btn-primary">Export XML <span class="arrow">→</span></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- AUTO-CUES -->
+<section class="block" id="cues" style="padding-top:0">
+  <div class="wrap">
+    <div class="feature flip">
+      <div class="cues-card">
+        <div class="cues-head">
+          <div class="cues-track">aubade — dub take.wav<span class="bpm">· 124.0 BPM · 9A · 6:42</span></div>
+          <div class="cues-meta">template: dj_workflow · batch: 84 tracks</div>
+        </div>
+        <div class="cues-body">
+          <div class="wave-wrap">
+            <div class="wave-bars">
+              <!-- 96 bars; varied heights via inline style -->
+              <i style="height:18%"></i><i style="height:22%"></i><i style="height:28%"></i><i style="height:24%"></i><i style="height:32%"></i><i style="height:30%"></i><i style="height:36%"></i><i style="height:42%"></i>
+              <i style="height:40%" class="lit"></i><i style="height:48%" class="lit"></i><i style="height:54%" class="lit"></i><i style="height:50%" class="lit"></i>
+              <i style="height:58%"></i><i style="height:62%"></i><i style="height:60%"></i><i style="height:64%"></i><i style="height:66%"></i><i style="height:62%"></i><i style="height:64%"></i><i style="height:68%"></i>
+              <i style="height:72%"></i><i style="height:74%"></i><i style="height:78%"></i><i style="height:76%"></i><i style="height:82%"></i><i style="height:80%"></i><i style="height:84%"></i><i style="height:78%"></i>
+              <i style="height:88%" class="lit"></i><i style="height:92%" class="lit"></i><i style="height:94%" class="lit"></i><i style="height:90%" class="lit"></i><i style="height:96%" class="lit"></i><i style="height:92%" class="lit"></i>
+              <i style="height:88%"></i><i style="height:86%"></i><i style="height:84%"></i><i style="height:82%"></i><i style="height:80%"></i><i style="height:84%"></i><i style="height:86%"></i><i style="height:82%"></i>
+              <i style="height:78%"></i><i style="height:80%"></i><i style="height:84%"></i><i style="height:88%"></i><i style="height:90%"></i><i style="height:92%"></i><i style="height:96%"></i><i style="height:94%"></i>
+              <i style="height:92%"></i><i style="height:88%"></i><i style="height:84%"></i><i style="height:80%"></i><i style="height:78%"></i><i style="height:74%"></i><i style="height:72%"></i><i style="height:68%"></i>
+              <i style="height:66%"></i><i style="height:62%"></i><i style="height:60%"></i><i style="height:58%"></i><i style="height:54%"></i><i style="height:52%"></i><i style="height:50%"></i><i style="height:46%"></i>
+              <i style="height:44%" class="dim"></i><i style="height:40%" class="dim"></i><i style="height:38%" class="dim"></i><i style="height:34%" class="dim"></i><i style="height:32%" class="dim"></i><i style="height:28%" class="dim"></i><i style="height:24%" class="dim"></i><i style="height:22%" class="dim"></i>
+              <i style="height:20%" class="dim"></i><i style="height:18%" class="dim"></i><i style="height:14%" class="dim"></i><i style="height:12%" class="dim"></i>
+            </div>
+            <div class="cue-markers">
+              <div class="cue" style="left:6%"><span class="lbl">Intro · 0:32</span></div>
+              <div class="cue teal" style="left:22%"><span class="lbl">Mix-in</span></div>
+              <div class="cue mag" style="left:42%"><span class="lbl">Drop · 2:08</span></div>
+              <div class="cue teal" style="left:58%"><span class="lbl">Core</span></div>
+              <div class="cue mag" style="left:74%"><span class="lbl">Drop 2</span></div>
+              <div class="cue amber" style="left:90%"><span class="lbl">Mix-out</span></div>
+            </div>
+          </div>
+          <div class="timeline">
+            <span>0:00</span><span>1:24</span><span>2:48</span><span>4:12</span><span>5:36</span><span>6:42</span>
+          </div>
+        </div>
+        <div class="cues-template">
+          <span class="tlbl">Cue template</span>
+          <div class="seq">
+            <span class="intro">Intro</span>
+            <span class="core">Mix-in / Core</span>
+            <span class="drop">Drops</span>
+            <span class="out">Mix-out</span>
+          </div>
+          <span style="color:var(--muted-2)">beat-aligned · ±1 bar</span>
+        </div>
+      </div>
+
+      <div class="feature-text">
+        <span class="eyebrow">Auto-cues</span>
+        <h2>Set hot &amp; memory cues on the <em style="font-style:normal;color:var(--accent)">whole crate</em>, not one track at a time.</h2>
+        <p class="lead">
+          rbassist listens for drops, breaks, and mix-points, then writes hot and memory cues on beat-aligned positions using
+          your own template. Skip tracks that already have cues, or force overwrite. Write them straight back to Rekordbox.
+        </p>
+        <ul class="feature-bullets">
+          <li><span class="num">01</span><div><b>Templates, not hardcoded slots</b><span class="det">Intro / mix-in / drop / core / mix-out — the dj_workflow profile is config-driven so you can shape it to how you mix.</span></div></li>
+          <li><span class="num">02</span><div><b>Beat-aligned, not just &ldquo;close&rdquo;</b><span class="det">Cues snap to the beatgrid (BeatNet CRNN with a librosa fallback). No off-grid hot cues messing up your loops.</span></div></li>
+          <li><span class="num">03</span><div><b>Batch the whole library</b><span class="det">Process thousands of tracks with skip-existing on. Overwrite is one toggle, never a default.</span></div></li>
+          <li><span class="num">04</span><div><b>Rekordbox writes are backed up</b><span class="det">Every cue write produces a timestamped sidecar so you can roll back if a template change misfires.</span></div></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- AI TAGGING -->
+<section class="block" id="tagging" style="padding-top:0">
+  <div class="wrap">
+    <div class="feature">
+      <div class="feature-text">
+        <span class="eyebrow">AI tagging</span>
+        <h2>Tags that <em style="font-style:normal;color:var(--accent)">learn how you tag</em>, not someone else&rsquo;s genre tree.</h2>
+        <p class="lead">
+          Train rbassist on the tags you actually use — &ldquo;rolling,&rdquo; &ldquo;dubby,&rdquo; &ldquo;warm bass,&rdquo; whatever you&rsquo;ve built —
+          and it suggests tags on the rest of your library. Confidence threshold is yours. AI tags live in their own namespace,
+          so they never overwrite the ones you wrote by hand.
+        </p>
+        <ul class="feature-bullets">
+          <li><span class="num">01</span><div><b>Your tagging style, not theirs</b><span class="det">Active learning picks the most uncertain tracks for you to label, so a small effort goes a long way.</span></div></li>
+          <li><span class="num">02</span><div><b>User tags vs. AI tags, kept separate</b><span class="det">Two namespaces. AI suggestions never silently overwrite what you already tagged. Promote them when you&rsquo;re ready.</span></div></li>
+          <li><span class="num">03</span><div><b>Review-first, always</b><span class="det">Suggestions sit in a queue. Accept, reject, edit, or batch-approve above your confidence threshold.</span></div></li>
+        </ul>
+      </div>
+
+      <div class="tag-card">
+        <div class="tag-head">
+          <div class="ns">
+            <button class="on ai">AI suggestions</button>
+            <button>User tags</button>
+            <button>Profiles</button>
+          </div>
+          <div class="conf">
+            <span>confidence ≥</span>
+            <div class="ctrack"><i style="width:72%"></i><span class="th" style="left:72%"></span></div>
+            <span class="v">72%</span>
+          </div>
+        </div>
+        <div class="tag-body">
+          <div class="tag-row">
+            <div class="trk"><b>Echo Chamber — Underwater Mix</b><span>halftone · 122.0 BPM · 8A</span></div>
+            <div class="suggestions">
+              <span class="stag high">rolling <span class="cf">94%</span></span>
+              <span class="stag high">dubby <span class="cf">91%</span></span>
+              <span class="stag high">warm-bass <span class="cf">86%</span></span>
+              <span class="stag med">sparse-vocal <span class="cf">74%</span></span>
+            </div>
+            <div class="tag-actions"><button class="tact rej">skip</button><button class="tact acc">accept</button></div>
+          </div>
+          <div class="tag-row">
+            <div class="trk"><b>Aubade — Dub Take</b><span>promo · 124.0 BPM · 9A</span></div>
+            <div class="suggestions">
+              <span class="stag high">rolling <span class="cf">88%</span></span>
+              <span class="stag high">dubby <span class="cf">82%</span></span>
+              <span class="stag med">tool <span class="cf">78%</span></span>
+              <span class="stag low">peak-time <span class="cf">41%</span></span>
+            </div>
+            <div class="tag-actions"><button class="tact rej">skip</button><button class="tact acc">accept</button></div>
+          </div>
+          <div class="tag-row">
+            <div class="trk"><b>Night Bus 4am</b><span>bandcamp · 123.3 BPM · 9A</span></div>
+            <div class="suggestions">
+              <span class="stag high">rolling <span class="cf">81%</span></span>
+              <span class="stag med">late-night <span class="cf">76%</span></span>
+              <span class="stag med">warm-bass <span class="cf">73%</span></span>
+              <span class="stag low">dubby <span class="cf">58%</span></span>
+            </div>
+            <div class="tag-actions"><button class="tact rej">skip</button><button class="tact acc">accept</button></div>
+          </div>
+          <div class="tag-row">
+            <div class="trk"><b>Slow Lacquer</b><span>halftone · 121.2 BPM · 8A</span></div>
+            <div class="suggestions">
+              <span class="stag high">dubby <span class="cf">87%</span></span>
+              <span class="stag high">warm-bass <span class="cf">84%</span></span>
+              <span class="stag med">rolling <span class="cf">79%</span></span>
+            </div>
+            <div class="tag-actions"><button class="tact rej">skip</button><button class="tact acc">accept</button></div>
+          </div>
+          <div class="tag-row">
+            <div class="trk"><b>Glassbeach — Reprise</b><span>vinyl rip · 119.7 BPM · 8A</span></div>
+            <div class="suggestions">
+              <span class="stag med">warm-bass <span class="cf">76%</span></span>
+              <span class="stag med">dubby <span class="cf">72%</span></span>
+              <span class="stag low">rolling <span class="cf">52%</span></span>
+            </div>
+            <div class="tag-actions"><button class="tact rej">skip</button><button class="tact acc">accept</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LIBRARY HEALTH / REPAIR -->
+<section class="block" id="repair" style="padding-top:0">
+  <div class="wrap">
+    <div class="feature flip">
+      <div class="health-card">
+        <div class="health-head">
+          <b>Library health · ~/Music/library</b>
+          <span>last audit · 2 min ago</span>
+        </div>
+        <div class="health-row warn">
+          <div class="icn">!</div>
+          <div>Missing cues</div>
+          <div class="ct">3,329</div>
+          <div class="act dry">queue for auto-cues</div>
+        </div>
+        <div class="health-row warn">
+          <div class="icn">!</div>
+          <div>Stale paths (file moved or renamed)</div>
+          <div class="ct">412</div>
+          <div class="act dry">propose remap</div>
+        </div>
+        <div class="health-row warn">
+          <div class="icn">!</div>
+          <div>Bare metadata (filename-only, no tags)</div>
+          <div class="ct">187</div>
+          <div class="act dry">enrich from Bandcamp</div>
+        </div>
+        <div class="health-row">
+          <div class="icn">·</div>
+          <div>Duplicate candidates</div>
+          <div class="ct">94</div>
+          <div class="act">overlay (no delete)</div>
+        </div>
+        <div class="health-row">
+          <div class="icn">·</div>
+          <div>Outside canonical music root</div>
+          <div class="ct">58</div>
+          <div class="act">review</div>
+        </div>
+        <div class="health-row ok">
+          <div class="icn">✓</div>
+          <div>Rekordbox XML in sync</div>
+          <div class="ct">24,981</div>
+          <div class="act">ok</div>
+        </div>
+        <div class="health-row ok">
+          <div class="icn">✓</div>
+          <div>Embeddings up to date</div>
+          <div class="ct">28,095</div>
+          <div class="act">ok</div>
+        </div>
+        <div class="health-foot">
+          <span>28,412 tracks scanned · ~/Music/library</span>
+          <span style="color:var(--accent)">all actions dry-run-first</span>
+        </div>
+      </div>
+
+      <div class="feature-text">
+        <span class="eyebrow">Library repair</span>
+        <h2>Clean up the library <em style="font-style:normal;color:var(--accent)">without wrecking the library.</em></h2>
+        <p class="lead">
+          Years of downloads leave broken paths, half-tagged files, duplicate versions, and tracks that wandered out of your music
+          root. rbassist audits all of it, shows you a plain-language report, and changes nothing until you approve.
+        </p>
+        <ul class="feature-bullets">
+          <li><span class="num">01</span><div><b>Dry-run first, always</b><span class="det">Every repair produces a report before it touches a tag or a path. Inspect the JSON/Markdown, then apply.</span></div></li>
+          <li><span class="num">02</span><div><b>Duplicates aren&rsquo;t deleted — they&rsquo;re hidden</b><span class="det">Suspected dupes live in an overlay you can review. rbassist never moves a file to the recycle bin on its own.</span></div></li>
+          <li><span class="num">03</span><div><b>Rekordbox is a secondary truth</b><span class="det">rbassist reconciles XML and DB state against your real files. It never overwrites Rekordbox without an explicit confirm.</span></div></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MODELS — DJ-friendly redo -->
+<section class="block" id="models" style="padding-top:0">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">What&rsquo;s listening</span>
+      <h2>Different models hear different things. rbassist keeps them honest.</h2>
+      <p class="sub">
+        Under the hood, rbassist runs four different AI listeners. Two of them are doing the heavy lifting today; two more are in the lab,
+        and you can A/B them yourself before they ever touch your main workflow.
+      </p>
+    </div>
+
+    <div class="lanes2">
+      <div class="ml-card">
+        <div class="ml-top"><div class="ml-name">MERT</div><div class="ml-stage prod">● Production</div></div>
+        <div class="ml-for">Mix neighbours from a seed track.</div>
+        <div class="ml-desc">The default behind &ldquo;sounds like this&rdquo; queries. Strong on bass, rhythm, and harmonic feel — the things that actually decide whether two tracks mix.</div>
+        <div class="ml-traits">
+          <div class="ml-trait"><span class="k">Best for</span><span class="v">seed-track search</span></div>
+          <div class="ml-trait"><span class="k">Hears well</span><span class="v good">bass · rhythm · harmony</span></div>
+          <div class="ml-trait"><span class="k">Cost</span><span class="v">local GPU · seconds</span></div>
+        </div>
+      </div>
+
+      <div class="ml-card">
+        <div class="ml-top"><div class="ml-name">CLAP</div><div class="ml-stage prod">● Production</div></div>
+        <div class="ml-for">Type a vibe. Get tracks.</div>
+        <div class="ml-desc">Behind every &ldquo;describe a vibe&rdquo; query. Strong on adjectives DJs actually use — dubby, rolling, warm, peak-time, dark — turned into real candidates from your folder.</div>
+        <div class="ml-traits">
+          <div class="ml-trait"><span class="k">Best for</span><span class="v">text-to-track search</span></div>
+          <div class="ml-trait"><span class="k">Hears well</span><span class="v good">mood · texture · genre cues</span></div>
+          <div class="ml-trait"><span class="k">Cost</span><span class="v">local GPU · &lt; 1s/query</span></div>
+        </div>
+      </div>
+
+      <div class="ml-card beta">
+        <div class="ml-top"><div class="ml-name">MuQ</div><div class="ml-stage beta">◐ Beta · lab</div></div>
+        <div class="ml-for">Second opinion when MERT&rsquo;s picks feel stale.</div>
+        <div class="ml-desc">A newer audio-only model. Sometimes catches the kind of neighbour MERT misses — a different rhythmic relative, an unexpected sonic cousin. Not promoted into the main flow until it earns it.</div>
+        <div class="ml-traits">
+          <div class="ml-trait"><span class="k">Best for</span><span class="v">comparison &amp; A/B</span></div>
+          <div class="ml-trait"><span class="k">Hears differently</span><span class="v warn">rhythm · texture</span></div>
+          <div class="ml-trait"><span class="k">Status</span><span class="v warn">in Models Lab only</span></div>
+        </div>
+      </div>
+
+      <div class="ml-card beta">
+        <div class="ml-top"><div class="ml-name">MuLan</div><div class="ml-stage beta">◐ Beta · lab</div></div>
+        <div class="ml-for">A more music-native vibe search.</div>
+        <div class="ml-desc">Music-native text/audio model. Sometimes handles DJ phrasing better than CLAP, sometimes worse — that&rsquo;s exactly what the lab is for. Compare side by side, decide for yourself.</div>
+        <div class="ml-traits">
+          <div class="ml-trait"><span class="k">Best for</span><span class="v">prompt A/B vs. CLAP</span></div>
+          <div class="ml-trait"><span class="k">Hears differently</span><span class="v warn">music-native language</span></div>
+          <div class="ml-trait"><span class="k">Status</span><span class="v warn">in Models Lab only</span></div>
+        </div>
+      </div>
+    </div>
+
+    <p class="mono" style="margin-top:18px;color:var(--muted-2)">No fake universal score. Indexes stay separate; fusion only happens at the ranking layer, after measurement.</p>
+  </div>
+</section>
+
+<!-- SAFETY -->
+<section class="block" id="safety" style="padding-top:0">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">Local-first safety</span>
+      <h2>Reviewable. Reversible. Local.</h2>
+      <p class="sub">
+        DJs protect their libraries by inspecting before they apply. rbassist is built the same way.
+        No silent mutations, no cloud uploads, no surprise deletes.
+      </p>
+    </div>
+
+    <div class="safety-grid">
+      <ul class="safety-list">
+        <li><span class="num">01</span><div><b>Local metadata and model sidecars</b><span>Embeddings, indexes, and analysis live next to your files, on your disk.</span></div></li>
+        <li><span class="num">02</span><div><b>Dry-run-first repair workflows</b><span>Every destructive operation produces a report before it touches a tag or path.</span></div></li>
+        <li><span class="num">03</span><div><b>Backup-first metadata mutation</b><span>Tag and Rekordbox writes are backed up to a timestamped sidecar before they apply.</span></div></li>
+        <li><span class="num">04</span><div><b>Rekordbox treated as a secondary truth source</b><span>rbassist reconciles, never overwrites Rekordbox without explicit operator approval.</span></div></li>
+        <li><span class="num">05</span><div><b>Duplicate suppression overlay, not deletion</b><span>Suspected duplicates are hidden and reviewable — never auto-deleted from disk.</span></div></li>
+        <li><span class="num">06</span><div><b>AI tags stay in their own namespace</b><span>User tags and AI tags never collide. Promote AI tags into user space only when you accept them.</span></div></li>
+      </ul>
+
+      <div class="safety-cli">
+        <div class="bar"><span>~/rbassist · supervised runner</span><span class="dot">● local gpu</span></div>
+        <div class="body">
+<span class="cm"># preview before any mutation</span><br/>
+<span class="pr">rbassist&gt;</span> repair tags --crate "warmup / dub" <span class="arr">--dry-run</span><br/><br/>
+<span class="txt">scanning 84 tracks…</span> <span class="ok">ok</span><br/>
+<span class="txt">  • 3 missing keys</span> <span class="wn">→ propose</span><br/>
+<span class="txt">  • 1 stale path</span>   <span class="wn">→ propose remap</span><br/>
+<span class="txt">  • 2 dup candidates</span> <span class="wn">→ overlay only</span><br/>
+<span class="txt">  • 0 destructive</span>  <span class="ok">— safe</span><br/><br/>
+<span class="cm"># report saved · nothing written</span><br/>
+<span class="pr">rbassist&gt;</span> _<span style="display:inline-block;width:7px;height:13px;background:var(--accent);vertical-align:-2px;margin-left:2px;animation:blink 1.05s steps(2) infinite"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATUS -->
+<section class="block" id="status" style="padding-top:0">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">Where it is</span>
+      <h2>Power-user beta, not vaporware.</h2>
+      <p class="sub">
+        Real workflows, real sidecars, real GUI pages, real CLI commands, real tests. Next: UX hardening,
+        measured model evaluation, packaging, licensing review.
+      </p>
+    </div>
+
+    <div class="status">
+      <div class="scol prod">
+        <div class="scol-h"><span>● Ready now</span><span class="ct">7</span></div>
+        <ul>
+          <li>Seed-track recommendations</li>
+          <li>Vibe search</li>
+          <li>Crate Expander</li>
+          <li>Auto hot/memory cues</li>
+          <li>AI tag suggestions</li>
+          <li>Library health audit</li>
+          <li>NiceGUI + CLI workflows</li>
+        </ul>
+      </div>
+      <div class="scol beta">
+        <div class="scol-h"><span>◐ Beta / lab</span><span class="ct">4</span></div>
+        <ul>
+          <li>MuQ second-opinion lane</li>
+          <li>MuLan music-native vibe search</li>
+          <li>Models Lab side-by-side</li>
+          <li>Multi-provider rank fusion</li>
+        </ul>
+      </div>
+      <div class="scol future">
+        <div class="scol-h"><span>○ Not yet promoted</span><span class="ct">4</span></div>
+        <ul>
+          <li>MuQ / MuLan as default Discover</li>
+          <li>All-model fusion in production</li>
+          <li>Commercial SaaS packaging</li>
+          <li>Full licensing clearance</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="cta" style="padding:0 0 40px">
+  <div class="wrap">
+    <div class="cta">
+      <div>
+        <span class="eyebrow">Beta access</span>
+        <h2 style="margin-top:14px">Want to test rbassist on a real DJ library?</h2>
+        <p style="margin-top:16px;font-size:16px;color:#c8ccd3;max-width:54ch">
+          We&rsquo;re looking for serious local-file DJs, crate diggers, and technically curious testers
+          who want better search and repair workflows without giving up control of their library.
+        </p>
+        <div class="cta-ctas">
+          <a class="btn btn-primary" href="mailto:beta@rbassist.local?subject=rbassist%20beta">Request beta access <span class="arrow">→</span></a>
+          <a class="btn" href="#">Read the technical brief</a>
+          <a class="btn btn-ghost" href="#">Follow development</a>
+        </div>
+      </div>
+      <div class="cta-meta">
+        <div><span>Platform</span><b>Windows 10 / 11 · x64</b></div>
+        <div><span>GPU</span><b>NVIDIA CUDA recommended</b></div>
+        <div><span>Library size tested</span><b>up to ~50,000 tracks</b></div>
+        <div><span>Rekordbox</span><b>XML 6.x · read &amp; write</b></div>
+        <div><span>Data leaves your machine</span><b style="color:var(--accent)">never, by default</b></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap">
+    <div class="foot">
+      <div class="foot-brand">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true"></div>
+          <span>rbassist</span>
+        </div>
+        <p>A local AI crate assistant for DJs who need control, privacy, and deeper search than Rekordbox gives them.</p>
+        <span class="mono" style="color:var(--muted-2)">© rbassist · independent project · 2025</span>
+      </div>
+      <div class="foot-col">
+        <h5>Product</h5>
+        <a href="#vibe">Vibe search</a>
+        <a href="#crates">Crate Expander</a>
+        <a href="#cues">Auto-cues</a>
+        <a href="#tagging">AI tagging</a>
+        <a href="#repair">Library repair</a>
+      </div>
+      <div class="foot-col">
+        <h5>Development</h5>
+        <a href="#status">Roadmap</a>
+        <a href="#">Technical brief</a>
+        <a href="#">Changelog</a>
+        <a href="#">GitHub</a>
+      </div>
+      <div class="foot-col">
+        <h5>Contact</h5>
+        <a href="#cta">Beta access</a>
+        <a href="#">DJ / library testing</a>
+        <a href="#">Press</a>
+        <a href="#">hello@rbassist.local</a>
+      </div>
+    </div>
+    <div class="legal">
+      <span>Not affiliated with Pioneer DJ, AlphaTheta, or Rekordbox.</span>
+      <span>Rekordbox-aware, not Rekordbox-dependent.</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
